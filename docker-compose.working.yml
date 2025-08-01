@@ -34,7 +34,7 @@ services:
       - ./ai_controllers:/workspace/ai_controllers:ro
       - ./swarm_agents:/workspace/swarm_agents:ro
     ports:
-      - "5000:5000"
+      - "5002:5000"
     deploy:
       resources:
         limits:

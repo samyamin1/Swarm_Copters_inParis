@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   gazebo_gui:
-    image: gazebo:gzclient11-focal
+    image: gazebo:latest
     platform: linux/amd64
     container_name: paris_swarm_gazebo_gui
     environment:
@@ -14,8 +14,8 @@ services:
       - ./quadcopter_models:/workspace/quadcopter_models:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     ports:
-      - "11345:11345"
-      - "11346:11346"
+      - "11347:11345"
+      - "11348:11346"
     deploy:
       resources:
         limits:
@@ -24,7 +24,7 @@ services:
     networks:
       - paris_swarm_network
     restart: unless-stopped
-    command: gzclient --verbose --world /workspace/paris_environment/worlds/paris_visual_world.world
+    command: gazebo --verbose /workspace/paris_environment/worlds/paris_visual_world.world
 
 networks:
   paris_swarm_network:

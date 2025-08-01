@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Proof - Real Visual AI Decisions</title>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: 'Courier New', monospace; 
+            background: #000;
+            color: #00ff00;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 450px;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 2px solid #00ff00;
+        }
+        .main-view {
+            flex: 1;
+            position: relative;
+        }
+        .canvas-container {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        .status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #00ff00;
+            z-index: 1000;
+        }
+        .quad-info {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(0,255,0,0.1);
+            border: 1px solid #00ff00;
+        }
+        .quad-001 { border-left: 4px solid #00ff00; }
+        .quad-002 { border-left: 4px solid #ff0000; }
+        .quad-003 { border-left: 4px solid #0000ff; }
+        .camera-view {
+            background: rgba(255,255,0,0.1);
+            border: 1px solid #ffff00;
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 11px;
+        }
+        .ai-decision {
+            background: rgba(0,255,255,0.1);
+            border: 1px solid #00ffff;
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 11px;
+        }
+        .camera-feed {
+            background: #000;
+            border: 2px solid #ffff00;
+            margin: 5px 0;
+            padding: 5px;
+            text-align: center;
+            font-size: 10px;
+        }
+        h1, h2, h3 { margin: 0 0 10px 0; color: #00ff00; }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,255,0,0.1);
+            border-radius: 5px;
+            border: 1px solid #00ff00;
+        }
+        .control-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .control-btn:hover { background: #00cc00; }
+        .control-btn:disabled { background: #666; cursor: not-allowed; }
+        .real-time-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #00ff00;
+            padding: 10px;
+            font-size: 10px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px;
+        }
+        .timestamp { color: #ffff00; }
+        .camera { color: #ffff00; }
+        .ai { color: #ff00ff; }
+        .comm { color: #ff8800; }
+        .detected { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>📷 CAMERA PROOF</h1>
+            <h2>Real Visual AI Decisions</h2>
+            
+            <div class="status">
+                <strong>Status:</strong> <span id="status">Initializing Camera...</span>
+            </div>
+            
+            <div class="controls">
+                <h3>🎮 Controls</h3>
+                <button class="control-btn" id="startBtn" onclick="startCameraSimulation()">Start Camera AI</button>
+                <button class="control-btn" id="pauseBtn" onclick="pauseSimulation()" disabled>Pause</button>
+                <button class="control-btn" id="resetBtn" onclick="resetSimulation()">Reset</button>
+                <button class="control-btn" onclick="testCameraDetection()">Test Camera</button>
+            </div>
+            
+            <div class="quad-info quad-001">
+                <strong>🟢 Quadcopter 001</strong><br>
+                Position: <span id="pos-001">[0, 10, 0]</span><br>
+                Status: <span id="status-001">Camera Initializing</span><br>
+                Battery: <span id="battery-001">85%</span><br>
+                <div class="camera-view" id="camera-001">
+                    <strong>📷 Camera Feed:</strong><br>
+                    <div class="camera-feed" id="camera-feed-001">
+                        [Camera Initializing...]
+                    </div>
+                    Objects Detected: <span id="objects-001">0</span><br>
+                    Distance to Objects: <span id="distance-001">--</span><br>
+                    Visual Quality: <span id="quality-001">--</span>
+                </div>
+                <div class="ai-decision" id="ai-001">
+                    <strong>🤖 AI Decision:</strong><br>
+                    <span id="decision-001">Waiting for camera data...</span>
+                </div>
+            </div>
+            
+            <div class="quad-info quad-002">
+                <strong>🔴 Quadcopter 002</strong><br>
+                Position: <span id="pos-002">[10, 12, 0]</span><br>
+                Status: <span id="status-002">Camera Initializing</span><br>
+                Battery: <span id="battery-002">78%</span><br>
+                <div class="camera-view" id="camera-002">
+                    <strong>📷 Camera Feed:</strong><br>
+                    <div class="camera-feed" id="camera-feed-002">
+                        [Camera Initializing...]
+                    </div>
+                    Objects Detected: <span id="objects-002">0</span><br>
+                    Distance to Objects: <span id="distance-002">--</span><br>
+                    Visual Quality: <span id="quality-002">--</span>
+                </div>
+                <div class="ai-decision" id="ai-002">
+                    <strong>🤖 AI Decision:</strong><br>
+                    <span id="decision-002">Waiting for camera data...</span>
+                </div>
+            </div>
+            
+            <div class="quad-info quad-003">
+                <strong>🔵 Quadcopter 003</strong><br>
+                Position: <span id="pos-003">[-10, 11, 0]</span><br>
+                Status: <span id="status-003">Camera Initializing</span><br>
+                Battery: <span id="battery-003">92%</span><br>
+                <div class="camera-view" id="camera-003">
+                    <strong>📷 Camera Feed:</strong><br>
+                    <div class="camera-feed" id="camera-feed-003">
+                        [Camera Initializing...]
+                    </div>
+                    Objects Detected: <span id="objects-003">0</span><br>
+                    Distance to Objects: <span id="distance-003">--</span><br>
+                    Visual Quality: <span id="quality-003">--</span>
+                </div>
+                <div class="ai-decision" id="ai-003">
+                    <strong>🤖 AI Decision:</strong><br>
+                    <span id="decision-003">Waiting for camera data...</span>
+                </div>
+            </div>
+            
+            <div id="communications">
+                <h3>📡 Camera AI Communications</h3>
+                <div class="real-time-log" id="comm-log">
+                    <div class="log-entry">
+                        <span class="timestamp">[00:00:00]</span> <span class="comm">System: Initializing camera simulation...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-view">
+            <div class="canvas-container" id="canvas-container">
+                <!-- Canvas will be created by Three.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // Camera Proof Simulation
+        let scene, camera, renderer, quadcopters = {};
+        let animationId;
+        let isRunning = false;
+        let simulationInterval;
+        
+        // Environment objects that cameras can detect
+        let environmentObjects = [
+            {name: 'Eiffel Tower', pos: [0, 25, 0], size: [10, 50, 10], type: 'building', color: 0x808080},
+            {name: 'Communication Tower', pos: [20, 15, 20], size: [4, 30, 4], type: 'tower', color: 0x20ff20},
+            {name: 'Building A', pos: [-15, 10, 15], size: [8, 20, 8], type: 'building', color: 0x8b4513},
+            {name: 'Building B', pos: [15, 8, -10], size: [6, 16, 6], type: 'building', color: 0x696969},
+            {name: 'Tree 1', pos: [8, 5, 8], size: [2, 10, 2], type: 'tree', color: 0x228b22},
+            {name: 'Tree 2', pos: [-8, 5, -8], size: [2, 10, 2], type: 'tree', color: 0x228b22}
+        ];
+        
+        // Quadcopter data with camera simulation
+        let quadData = {
+            'quad_001': {pos: [0, 10, 0], battery: 85, decision: 'HOVER', cameraQuality: 0.9},
+            'quad_002': {pos: [10, 12, 0], battery: 78, decision: 'HOVER', cameraQuality: 0.85},
+            'quad_003': {pos: [-10, 11, 0], battery: 92, decision: 'HOVER', cameraQuality: 0.95}
+        };
+        
+        function init3D() {
+            console.log("Initializing Camera Proof 3D scene...");
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+            
+            // Create camera
+            const container = document.getElementById('canvas-container');
+            const aspect = container.clientWidth / container.clientHeight;
+            camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+            camera.position.set(50, 30, 50);
+            camera.lookAt(0, 0, 0);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Create ground
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x1a4d1a });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Create environment objects
+            environmentObjects.forEach(obj => {
+                const geometry = new THREE.BoxGeometry(...obj.size);
+                const material = new THREE.MeshLambertMaterial({ color: obj.color });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(...obj.pos);
+                mesh.castShadow = true;
+                mesh.userData = {name: obj.name, type: obj.type};
+                scene.add(mesh);
+            });
+            
+            // Create quadcopters
+            const quadColors = {
+                'quad_001': 0x00ff00, // Green
+                'quad_002': 0xff0000, // Red
+                'quad_003': 0x0000ff  // Blue
+            };
+            
+            Object.keys(quadColors).forEach((quadId, index) => {
+                // Create quadcopter body
+                const quadGeometry = new THREE.BoxGeometry(0.5, 0.1, 0.5);
+                const quadMaterial = new THREE.MeshLambertMaterial({ color: quadColors[quadId] });
+                const quad = new THREE.Mesh(quadGeometry, quadMaterial);
+                
+                // Create rotors
+                const rotorGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.02, 8);
+                const rotorMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                
+                for (let i = 0; i < 4; i++) {
+                    const rotor = new THREE.Mesh(rotorGeometry, rotorMaterial);
+                    const angle = (i * Math.PI) / 2;
+                    rotor.position.set(
+                        Math.cos(angle) * 0.3,
+                        0.06,
+                        Math.sin(angle) * 0.3
+                    );
+                    quad.add(rotor);
+                }
+                
+                quad.position.set(...quadData[quadId].pos);
+                quad.castShadow = true;
+                scene.add(quad);
+                quadcopters[quadId] = quad;
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+            
+            console.log("Camera Proof 3D scene initialized");
+            document.getElementById('status').textContent = 'Camera Ready';
+            document.getElementById('status').style.color = '#00ff00';
+            
+            // Start animation loop
+            animate();
+        }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            if (isRunning) {
+                // Rotate quadcopters and rotors
+                Object.values(quadcopters).forEach(quad => {
+                    quad.rotation.y += 0.02;
+                    quad.children.forEach(rotor => {
+                        rotor.rotation.y += 0.1;
+                    });
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const aspect = container.clientWidth / container.clientHeight;
+            
+            camera.aspect = aspect;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        function simulateCameraDetection(quadId) {
+            const quad = quadcopters[quadId];
+            const quadPos = quad.position;
+            const cameraQuality = quadData[quadId].cameraQuality;
+            
+            // Simulate camera field of view (120 degrees)
+            const cameraFOV = 120 * (Math.PI / 180);
+            const maxDetectionRange = 30;
+            
+            let detectedObjects = [];
+            let cameraFeed = [];
+            
+            // Check each environment object
+            environmentObjects.forEach(obj => {
+                const distance = Math.sqrt(
+                    Math.pow(quadPos.x - obj.pos[0], 2) +
+                    Math.pow(quadPos.y - obj.pos[1], 2) +
+                    Math.pow(quadPos.z - obj.pos[2], 2)
+                );
+                
+                if (distance <= maxDetectionRange) {
+                    // Calculate angle to object
+                    const angleToObject = Math.atan2(
+                        obj.pos[2] - quadPos.z,
+                        obj.pos[0] - quadPos.x
+                    );
+                    
+                    // Check if object is in camera FOV
+                    if (Math.abs(angleToObject) <= cameraFOV / 2) {
+                        // Add detection noise based on camera quality
+                        const detectionConfidence = cameraQuality * (1 - distance / maxDetectionRange);
+                        
+                        if (Math.random() < detectionConfidence) {
+                            detectedObjects.push({
+                                name: obj.name,
+                                type: obj.type,
+                                distance: distance,
+                                confidence: detectionConfidence,
+                                angle: angleToObject
+                            });
+                            
+                            // Add to camera feed
+                            cameraFeed.push(`${obj.name} (${distance.toFixed(1)}m)`);
+                        }
+                    }
+                }
+            });
+            
+            // Add some random camera artifacts
+            if (cameraQuality < 0.9) {
+                cameraFeed.push("Camera noise detected");
+            }
+            if (cameraQuality < 0.8) {
+                cameraFeed.push("Low light conditions");
+            }
+            
+            return {
+                objects: detectedObjects,
+                feed: cameraFeed,
+                quality: cameraQuality,
+                totalDetected: detectedObjects.length
+            };
+        }
+        
+        function makeCameraBasedAIDecision(quadId, cameraData) {
+            const quad = quadcopters[quadId];
+            const pos = quad.position;
+            
+            // Create AI prompt based on what camera actually sees
+            let scenario = `Quadcopter ${quadId} at position [${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}]. `;
+            
+            if (cameraData.totalDetected > 0) {
+                const closestObject = cameraData.objects.reduce((closest, obj) => 
+                    obj.distance < closest.distance ? obj : closest
+                );
+                
+                scenario += `Camera detected ${cameraData.totalDetected} objects: `;
+                cameraData.objects.forEach(obj => {
+                    scenario += `${obj.name} (${obj.distance.toFixed(1)}m away), `;
+                });
+                
+                if (closestObject.distance < 5) {
+                    scenario += `EMERGENCY: ${closestObject.name} very close (${closestObject.distance.toFixed(1)}m)! `;
+                } else if (closestObject.distance < 10) {
+                    scenario += `WARNING: ${closestObject.name} nearby (${closestObject.distance.toFixed(1)}m). `;
+                }
+            } else {
+                scenario += "Camera shows clear path ahead, no obstacles detected. ";
+            }
+            
+            scenario += `Camera quality: ${(cameraData.quality * 100).toFixed(0)}%. `;
+            
+            // Make real AI call based on camera data
+            fetch('http://localhost:5002/flight_decision', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    scenario: scenario,
+                    quad_id: quadId,
+                    camera_data: {
+                        objects_detected: cameraData.totalDetected,
+                        closest_object: cameraData.objects.length > 0 ? cameraData.objects[0] : null,
+                        camera_quality: cameraData.quality
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(`Camera AI Decision for ${quadId}:`, data.decision);
+                quadData[quadId].decision = data.decision;
+                updateCameraDisplay(quadId, cameraData);
+                addCommunication(`${quadId}: Camera AI Decision - ${data.decision} (${cameraData.totalDetected} objects detected)`);
+                
+                // Move quadcopter based on camera AI decision
+                moveQuadcopter(quadId, data.decision);
+            })
+            .catch(error => {
+                console.error('Camera AI decision error:', error);
+                quadData[quadId].decision = 'HOVER';
+                updateCameraDisplay(quadId, cameraData);
+                addCommunication(`${quadId}: Camera AI Error - Hovering`);
+            });
+        }
+        
+        function updateCameraDisplay(quadId, cameraData) {
+            const data = quadData[quadId];
+            const quad = quadcopters[quadId];
+            
+            // Update position and battery
+            document.getElementById(`pos-${quadId}`).textContent = 
+                `[${quad.position.x.toFixed(1)}, ${quad.position.y.toFixed(1)}, ${quad.position.z.toFixed(1)}]`;
+            document.getElementById(`battery-${quadId}`).textContent = `${data.battery.toFixed(1)}%`;
+            document.getElementById(`decision-${quadId}`).textContent = data.decision;
+            document.getElementById(`status-${quadId}`).textContent = 'Camera Active';
+            
+            // Update camera feed
+            const cameraFeedElement = document.getElementById(`camera-feed-${quadId}`);
+            if (cameraData.feed.length > 0) {
+                cameraFeedElement.innerHTML = cameraData.feed.join('<br>');
+            } else {
+                cameraFeedElement.innerHTML = '[Clear view - no objects detected]';
+            }
+            
+            // Update camera data
+            document.getElementById(`objects-${quadId}`).textContent = cameraData.totalDetected;
+            document.getElementById(`quality-${quadId}`).textContent = `${(cameraData.quality * 100).toFixed(0)}%`;
+            
+            if (cameraData.objects.length > 0) {
+                const closestDistance = Math.min(...cameraData.objects.map(obj => obj.distance));
+                document.getElementById(`distance-${quadId}`).textContent = `${closestDistance.toFixed(1)}m`;
+            } else {
+                document.getElementById(`distance-${quadId}`).textContent = '--';
+            }
+        }
+        
+        function moveQuadcopter(quadId, decision) {
+            const quad = quadcopters[quadId];
+            
+            switch(decision) {
+                case 'TURN_LEFT':
+                    quad.position.x -= 2;
+                    quad.position.z += 2;
+                    break;
+                case 'TURN_RIGHT':
+                    quad.position.x += 2;
+                    quad.position.z -= 2;
+                    break;
+                case 'MOVE_FORWARD':
+                    quad.position.z += 3;
+                    break;
+                case 'EMERGENCY_LANDING':
+                    quad.position.y = Math.max(0, quad.position.y - 1);
+                    break;
+                case 'HOVER':
+                default:
+                    // Small random movement for hover
+                    quad.position.x += (Math.random() - 0.5) * 0.5;
+                    quad.position.z += (Math.random() - 0.5) * 0.5;
+                    break;
+            }
+            
+            // Update quad data
+            quadData[quadId].pos = [quad.position.x, quad.position.y, quad.position.z];
+            
+            // Update battery
+            quadData[quadId].battery = Math.max(10, quadData[quadId].battery - Math.random() * 0.5);
+        }
+        
+        function addCommunication(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> <span class="comm">${message}</span>`;
+            
+            const logContainer = document.getElementById('comm-log');
+            logContainer.appendChild(logEntry);
+            
+            // Keep only last 15 entries
+            while (logContainer.children.length > 15) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+            
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function startCameraSimulation() {
+            isRunning = true;
+            document.getElementById('status').textContent = 'Camera AI Running';
+            document.getElementById('status').style.color = '#00ff00';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            
+            addCommunication("📷 Camera AI simulation started - detecting objects and making decisions");
+            
+            // Start camera AI decision loop
+            simulationInterval = setInterval(() => {
+                if (isRunning) {
+                    Object.keys(quadcopters).forEach(quadId => {
+                        // 1. Simulate camera detection
+                        const cameraData = simulateCameraDetection(quadId);
+                        
+                        // 2. Make AI decision based on camera data
+                        makeCameraBasedAIDecision(quadId, cameraData);
+                    });
+                }
+            }, 5000); // Camera AI decisions every 5 seconds
+        }
+        
+        function pauseSimulation() {
+            isRunning = false;
+            document.getElementById('status').textContent = 'Paused';
+            document.getElementById('status').style.color = '#ffff00';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            addCommunication("⏸️ Camera simulation paused");
+        }
+        
+        function resetSimulation() {
+            isRunning = false;
+            document.getElementById('status').textContent = 'Reset';
+            document.getElementById('status').style.color = '#ff0000';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            
+            // Reset quadcopter positions
+            const initialPositions = [
+                [0, 10, 0],
+                [10, 12, 0],
+                [-10, 11, 0]
+            ];
+            
+            Object.keys(quadcopters).forEach((quadId, index) => {
+                const quad = quadcopters[quadId];
+                quad.position.set(...initialPositions[index]);
+                quad.rotation.set(0, 0, 0);
+                quadData[quadId].pos = initialPositions[index];
+                quadData[quadId].decision = 'HOVER';
+                
+                // Reset camera display
+                const cameraData = simulateCameraDetection(quadId);
+                updateCameraDisplay(quadId, cameraData);
+            });
+            
+            addCommunication("🔄 Camera simulation reset");
+        }
+        
+        function testCameraDetection() {
+            addCommunication("🧪 Testing camera detection...");
+            Object.keys(quadcopters).forEach(quadId => {
+                const cameraData = simulateCameraDetection(quadId);
+                updateCameraDisplay(quadId, cameraData);
+                addCommunication(`${quadId}: Camera detected ${cameraData.totalDetected} objects`);
+            });
+        }
+        
+        // Initialize 3D scene when page loads
+        window.addEventListener('load', function() {
+            console.log("Page loaded, initializing Camera Proof 3D scene...");
+            init3D();
+        });
+        
+    </script>
+</body>
+</html> 

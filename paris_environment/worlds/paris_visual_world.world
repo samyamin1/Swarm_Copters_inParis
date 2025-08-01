@@ -34,7 +34,35 @@
       </link>
     </model>
     
-    <!-- Quadcopters -->
+    <!-- Communication Tower -->
+    <model name="comm_tower">
+      <static>true</static>
+      <pose>20 20 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>2</radius>
+              <length>30</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>2</radius>
+              <length>30</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.2 0.8 0.2 1</ambient>
+            <diffuse>0.2 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    
+    <!-- Quadcopters with Communication Links -->
     <model name="quad_001">
       <static>false</static>
       <pose>0 0 10 0 0 0</pose>
@@ -105,6 +133,43 @@
           <material>
             <ambient>0 0 1 1</ambient>
             <diffuse>0 0 1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    
+    <!-- Communication Visualization -->
+    <model name="comm_link_1_2">
+      <static>true</static>
+      <pose>5 0 11 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10 0.1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 0 0.5</ambient>
+            <diffuse>1 1 0 0.5</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    
+    <model name="comm_link_2_3">
+      <static>true</static>
+      <pose>0 0 11.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>20 0.1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 1 1 0.5</ambient>
+            <diffuse>0 1 1 0.5</diffuse>
           </material>
         </visual>
       </link>
