@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Paris Swarm Simulation Launch File -->
+  <!-- Launches Gazebo with Paris world and quadcopter swarm -->
+  
+  <!-- Simulation parameters -->
+  <arg name="world_file" default="$(find paris_environment)/worlds/paris_swarm_world.world"/>
+  <arg name="swarm_size" default="5"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  
+  <!-- Set use_sim_time flag -->
+  <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+  
+  <!-- Set debug mode -->
+  <env if="$(arg debug)" name="GAZEBO_VERBOSE" value="true"/>
+  
+  <!-- Launch Gazebo with Paris world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_file)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="verbose" value="true"/>
+  </include>
+  
+  <!-- Launch AI Swarm Coordinator -->
+  <node name="swarm_coordinator" pkg="ai_controllers" type="swarm_coordinator.py" output="screen">
+    <param name="swarm_size" value="$(arg swarm_size)"/>
+    <param name="coordination_rate" value="10"/>
+    <param name="safety_distance" value="5.0"/>
+  </node>
+  
+  <!-- Launch individual quadcopter flight controllers -->
+  <group ns="quadcopters">
+    <node name="quad_001_controller" pkg="ai_controllers" type="flight_controller.py" output="screen">
+      <param name="quad_id" value="quad_001"/>
+      <param name="initial_position" value="[0, 0, 0]"/>
+      <param name="max_velocity" value="5.0"/>
+      <param name="hover_height" value="10.0"/>
+    </node>
+    
+    <node name="quad_002_controller" pkg="ai_controllers" type="flight_controller.py" output="screen">
+      <param name="quad_id" value="quad_002"/>
+      <param name="initial_position" value="[10, 0, 0]"/>
+      <param name="max_velocity" value="5.0"/>
+      <param name="hover_height" value="12.0"/>
+    </node>
+    
+    <node name="quad_003_controller" pkg="ai_controllers" type="flight_controller.py" output="screen">
+      <param name="quad_id" value="quad_003"/>
+      <param name="initial_position" value="[-10, 0, 0]"/>
+      <param name="max_velocity" value="5.0"/>
+      <param name="hover_height" value="11.0"/>
+    </node>
+    
+    <node name="quad_004_controller" pkg="ai_controllers" type="flight_controller.py" output="screen">
+      <param name="quad_id" value="quad_004"/>
+      <param name="initial_position" value="[0, 10, 0]"/>
+      <param name="max_velocity" value="5.0"/>
+      <param name="hover_height" value="13.0"/>
+    </node>
+    
+    <node name="quad_005_controller" pkg="ai_controllers" type="flight_controller.py" output="screen">
+      <param name="quad_id" value="quad_005"/>
+      <param name="initial_position" value="[0, -10, 0]"/>
+      <param name="max_velocity" value="5.0"/>
+      <param name="hover_height" value="9.0"/>
+    </node>
+  </group>
+  
+  <!-- Launch quadcopter models in Gazebo -->
+  <group ns="quadcopter_models">
+    <!-- Spawn quadcopter 001 -->
+    <node name="spawn_quad_001" pkg="gazebo_ros" type="spawn_model" 
+          args="-urdf -model quad_001 -param robot_description_001 -x 0 -y 0 -z 0.1" 
+          output="screen"/>
+    
+    <!-- Spawn quadcopter 002 -->
+    <node name="spawn_quad_002" pkg="gazebo_ros" type="spawn_model" 
+          args="-urdf -model quad_002 -param robot_description_002 -x 10 -y 0 -z 0.1" 
+          output="screen"/>
+    
+    <!-- Spawn quadcopter 003 -->
+    <node name="spawn_quad_003" pkg="gazebo_ros" type="spawn_model" 
+          args="-urdf -model quad_003 -param robot_description_003 -x -10 -y 0 -z 0.1" 
+          output="screen"/>
+    
+    <!-- Spawn quadcopter 004 -->
+    <node name="spawn_quad_004" pkg="gazebo_ros" type="spawn_model" 
+          args="-urdf -model quad_004 -param robot_description_004 -x 0 -y 10 -z 0.1" 
+          output="screen"/>
+    
+    <!-- Spawn quadcopter 005 -->
+    <node name="spawn_quad_005" pkg="gazebo_ros" type="spawn_model" 
+          args="-urdf -model quad_005 -param robot_description_005 -x 0 -y -10 -z 0.1" 
+          output="screen"/>
+  </group>
+  
+  <!-- Load quadcopter URDF descriptions -->
+  <param name="robot_description_001" command="$(find quadcopter_models)/scripts/generate_urdf.py quad_001"/>
+  <param name="robot_description_002" command="$(find quadcopter_models)/scripts/generate_urdf.py quad_002"/>
+  <param name="robot_description_003" command="$(find quadcopter_models)/scripts/generate_urdf.py quad_003"/>
+  <param name="robot_description_004" command="$(find quadcopter_models)/scripts/generate_urdf.py quad_004"/>
+  <param name="robot_description_005" command="$(find quadcopter_models)/scripts/generate_urdf.py quad_005"/>
+  
+  <!-- Launch mission control interface -->
+  <include file="$(find control_panel)/launch/mission_control.launch"/>
+  
+  <!-- Launch visualization tools -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find simulation)/config/paris_swarm.rviz" 
+        if="$(arg gui)" output="screen"/>
+  
+  <!-- Launch communication logger -->
+  <node name="communication_logger" pkg="scripts" type="communication_logger.py" output="screen">
+    <param name="log_file" value="$(find scripts)/logs/swarm_communication.log"/>
+  </node>
+  
+  <!-- Launch performance monitor -->
+  <node name="performance_monitor" pkg="scripts" type="performance_monitor.py" output="screen">
+    <param name="monitor_rate" value="1.0"/>
+  </node>
+  
+  <!-- Set simulation parameters -->
+  <param name="simulation/real_time_factor" value="1.0"/>
+  <param name="simulation/max_step_size" value="0.001"/>
+  <param name="simulation/gravity" value="0 0 -9.81"/>
+  
+  <!-- Mission parameters -->
+  <param name="mission/search_area_center" value="[0, 0, 15]"/>
+  <param name="mission/search_area_radius" value="100"/>
+  <param name="mission/mission_type" value="search_and_rescue"/>
+  <param name="mission/swarm_size" value="$(arg swarm_size)"/>
+  
+  <!-- Print launch information -->
+  <node name="launch_info" pkg="rostopic" type="rostopic" 
+        args="pub /launch_info std_msgs/String 'Paris Swarm Simulation Launched - $(arg swarm_size) quadcopters'" 
+        output="screen"/>
+  
+</launch> 

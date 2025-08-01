@@ -1,0 +1,40 @@
+# Paris Swarm Simulation Requirements
+# Python dependencies for the quadcopter swarm project
+
+# Core ROS dependencies
+rospy>=1.15.0
+std_msgs>=1.13.0
+geometry_msgs>=1.13.0
+nav_msgs>=1.13.0
+sensor_msgs>=1.13.0
+tf2_ros>=0.7.0
+tf2_geometry_msgs>=0.7.0
+
+# Scientific computing
+numpy>=1.21.0
+scipy>=1.7.0
+matplotlib>=3.5.0
+
+# GUI and visualization
+tkinter  # Usually included with Python
+matplotlib>=3.5.0
+
+# Data handling
+json5>=0.9.0
+pyyaml>=6.0
+
+# Simulation and physics
+gazebo_ros>=2.9.0
+gazebo_plugins>=2.9.0
+
+# Development and testing
+pytest>=6.0.0
+pytest-ros>=0.2.0
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0
+
+# Utilities
+psutil>=5.8.0
+colorama>=0.4.4 

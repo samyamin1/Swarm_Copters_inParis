@@ -1,0 +1,58 @@
+FROM ros:humble-ros-base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    git \
+    curl \
+    wget \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir \
+    numpy \
+    matplotlib \
+    requests \
+    urllib3 \
+    json5 \
+    pyyaml \
+    psutil \
+    colorama
+
+# Install ROS2 packages
+RUN apt-get update && apt-get install -y \
+    ros-humble-gazebo-ros-pkgs \
+    ros-humble-gazebo-plugins \
+    ros-humble-gazebo-dev \
+    ros-humble-tf2-ros \
+    ros-humble-tf2-geometry-msgs \
+    ros-humble-nav-msgs \
+    ros-humble-geometry-msgs \
+    ros-humble-sensor-msgs \
+    ros-humble-std-msgs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create workspace
+WORKDIR /workspace
+
+# Copy AI controllers and swarm agents
+COPY ai_controllers/ /workspace/ai_controllers/
+COPY swarm_agents/ /workspace/swarm_agents/
+COPY simulation/ /workspace/simulation/
+COPY paris_environment/ /workspace/paris_environment/
+
+# Make scripts executable
+RUN chmod +x /workspace/ai_controllers/*.py
+RUN chmod +x /workspace/swarm_agents/swarm_agents/*.py
+
+# Source ROS2 environment
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
+# Expose ports
+EXPOSE 8080 9090
+
+# Default command
+CMD ["/bin/bash"] 

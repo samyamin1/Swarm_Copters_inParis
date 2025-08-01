@@ -1,0 +1,59 @@
+
+version: '3.8'
+
+services:
+  gazebo:
+    image: gazebo:gzserver11-focal
+    platform: linux/amd64
+    environment:
+      - DISPLAY=:0
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - ./paris_environment:/workspace/paris_environment:ro
+      - ./quadcopter_models:/workspace/quadcopter_models:ro
+      - ./simulation:/workspace/simulation:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "11345:11345"
+      - "11346:11346"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+
+  ai_decision_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - MODEL_NAME=smollm:135m
+    volumes:
+      - ./ai_controllers:/workspace/ai_controllers:ro
+      - ./swarm_agents:/workspace/swarm_agents:ro
+    ports:
+      - "5000:5000"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    depends_on:
+      - ollama
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+
+networks:
+  paris_swarm_network:
+    external: true

@@ -1,0 +1,37 @@
+FROM python:3.9-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir \
+    requests \
+    urllib3 \
+    numpy \
+    json5 \
+    flask \
+    flask-cors
+
+# Create workspace
+WORKDIR /workspace
+
+# Copy AI controllers and swarm agents
+COPY ai_controllers/ /workspace/ai_controllers/
+COPY swarm_agents/ /workspace/swarm_agents/
+
+# Make scripts executable
+RUN chmod +x /workspace/ai_controllers/*.py
+RUN chmod +x /workspace/swarm_agents/swarm_agents/*.py
+
+# Create AI service
+COPY ai_decision_service.py /workspace/ai_decision_service.py
+
+# Expose port
+EXPOSE 5000
+
+# Default command
+CMD ["python3", "/workspace/ai_decision_service.py"] 

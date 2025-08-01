@@ -1,0 +1,213 @@
+version: '3.8'
+
+services:
+  # AI Model Service (Ollama with SMOLLM)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: paris_swarm_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    networks:
+      - paris_swarm_network
+    command: >
+      sh -c "
+        ollama pull smollm:135m &&
+        ollama serve
+      "
+
+  # Gazebo Simulation Environment - OPTIMIZED FOR REUSABILITY
+  gazebo:
+    # Use ARM64-specific image for Apple Silicon, fallback to AMD64 with emulation
+    image: ${GAZEBO_IMAGE:-arm64v8/gazebo:gzserver11-focal}
+    container_name: paris_swarm_gazebo
+    platform: ${GAZEBO_PLATFORM:-linux/arm64}
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - GAZEBO_MODEL_PATH=/workspace/quadcopter_models:/workspace/paris_environment
+      - GAZEBO_RESOURCE_PATH=/workspace/paris_environment
+      - GAZEBO_PLUGIN_PATH=/workspace/plugins
+    volumes:
+      - ./paris_environment:/workspace/paris_environment:ro
+      - ./quadcopter_models:/workspace/quadcopter_models:ro
+      - ./simulation:/workspace/simulation:ro
+      - ./plugins:/workspace/plugins:ro
+      - gazebo_cache:/root/.gazebo
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "11345:11345"  # Gazebo server
+      - "11346:11346"  # Gazebo client
+      - "11347:11347"  # Gazebo GUI (if needed)
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    depends_on:
+      - ros2_workspace
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11345"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ROS2 Workspace with AI Controllers
+  ros2_workspace:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    container_name: paris_swarm_ros2
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - OLLAMA_HOST=ollama:11434
+      - GAZEBO_MASTER_URI=http://gazebo:11345
+    volumes:
+      - ./ai_controllers:/workspace/ai_controllers:ro
+      - ./simulation:/workspace/simulation:ro
+      - ./paris_environment:/workspace/paris_environment:ro
+      - ./swarm_agents:/workspace/swarm_agents:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "8080:8080"  # Control panel
+      - "9090:9090"  # ROS2 bridge
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    depends_on:
+      - ollama
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Control Panel Web Interface
+  control_panel:
+    build:
+      context: ./control_panel
+      dockerfile: Dockerfile
+    container_name: paris_swarm_control_panel
+    ports:
+      - "8080:80"
+    volumes:
+      - ./control_panel:/app:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    depends_on:
+      - ros2_workspace
+      - gazebo
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # Mission Logging Service
+  mission_logger:
+    build:
+      context: .
+      dockerfile: Dockerfile.logger
+    container_name: paris_swarm_logger
+    volumes:
+      - ./logs:/workspace/logs
+      - ./simulation:/workspace/simulation:ro
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    depends_on:
+      - ollama
+      - ros2_workspace
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+
+  # AI Decision Service (SMOLLM Integration)
+  ai_decision_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: paris_swarm_ai
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - MODEL_NAME=smollm:135m
+    volumes:
+      - ./ai_controllers:/workspace/ai_controllers:ro
+      - ./swarm_agents:/workspace/swarm_agents:ro
+    ports:
+      - "5000:5000"  # AI API
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    depends_on:
+      - ollama
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  ollama_data:
+  gazebo_cache:
+
+networks:
+  paris_swarm_network:
+    driver: bridge 

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>paris_swarm_simulation</name>
+  <version>1.0.0</version>
+  <description>
+    Advanced AI-powered quadcopter swarm simulation for search and rescue missions in Paris.
+    Features high-fidelity flight dynamics, realistic Paris environment, and autonomous swarm coordination.
+  </description>
+
+  <maintainer email="your-email@example.com">Your Name</maintainer>
+  <license>MIT</license>
+
+  <url type="website">https://github.com/your-username/SWARM_Copters_In_Paris</url>
+  <url type="bugtracker">https://github.com/your-username/SWARM_Copters_In_Paris/issues</url>
+  <url type="repository">https://github.com/your-username/SWARM_Copters_In_Paris</url>
+
+  <author email="your-email@example.com">Your Name</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- ROS Dependencies -->
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>gazebo_plugins</build_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>tf2_ros</run_depend>
+  <run_depend>tf2_geometry_msgs</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>gazebo_plugins</run_depend>
+
+  <!-- Python Dependencies -->
+  <run_depend>python3-numpy</run_depend>
+  <run_depend>python3-scipy</run_depend>
+  <run_depend>python3-matplotlib</run_depend>
+  <run_depend>python3-tkinter</run_depend>
+
+  <!-- Export tags -->
+  <export>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
+    <gazebo_ros gazebo_media_path="${prefix}/worlds"/>
+  </export>
+
+</package> 

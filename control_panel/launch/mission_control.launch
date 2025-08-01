@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Mission Control Interface Launch File -->
+  <!-- Launches the mission control GUI for Paris swarm simulation -->
+  
+  <!-- Mission control interface parameters -->
+  <arg name="gui" default="true"/>
+  <arg name="log_level" default="info"/>
+  
+  <!-- Set log level -->
+  <env name="ROSCONSOLE_MIN_LEVEL" value="$(arg log_level)"/>
+  
+  <!-- Launch mission control interface -->
+  <node name="mission_control" pkg="control_panel" type="mission_control.py" 
+        output="screen" if="$(arg gui)">
+    <param name="update_rate" value="10.0"/>
+    <param name="log_communications" value="true"/>
+    <param name="show_map" value="true"/>
+  </node>
+  
+  <!-- Launch communication logger -->
+  <node name="comm_logger" pkg="scripts" type="communication_logger.py" 
+        output="screen">
+    <param name="log_file" value="$(find scripts)/logs/mission_communications.log"/>
+    <param name="log_level" value="$(arg log_level)"/>
+  </node>
+  
+  <!-- Launch performance monitor -->
+  <node name="perf_monitor" pkg="scripts" type="performance_monitor.py" 
+        output="screen">
+    <param name="monitor_rate" value="1.0"/>
+    <param name="log_performance" value="true"/>
+  </node>
+  
+  <!-- Print launch information -->
+  <node name="launch_info" pkg="rostopic" type="rostopic" 
+        args="pub /launch_info std_msgs/String 'Mission Control Interface Launched'" 
+        output="screen"/>
+  
+</launch> 

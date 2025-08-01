@@ -1,0 +1,98 @@
+
+version: '3.8'
+
+services:
+  # Ollama Service (already running)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: paris_swarm_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+
+  # AI Decision Service (working)
+  ai_decision_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: paris_swarm_ai
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - MODEL_NAME=smollm:135m
+    volumes:
+      - ./ai_controllers:/workspace/ai_controllers:ro
+      - ./swarm_agents:/workspace/swarm_agents:ro
+    ports:
+      - "5000:5000"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    depends_on:
+      - ollama
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Simple Gazebo (working)
+  gazebo:
+    image: gazebo:gzserver11-focal
+    platform: linux/amd64
+    container_name: paris_swarm_gazebo
+    environment:
+      - DISPLAY=:0
+      - QT_X11_NO_MITSHM=1
+      - GAZEBO_MODEL_PATH=/workspace/quadcopter_models:/workspace/paris_environment
+    volumes:
+      - ./paris_environment:/workspace/paris_environment:ro
+      - ./quadcopter_models:/workspace/quadcopter_models:ro
+      - ./simulation:/workspace/simulation:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "11345:11345"
+      - "11346:11346"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    networks:
+      - paris_swarm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11345"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  ollama_data:
+
+networks:
+  paris_swarm_network:
+    driver: bridge
